@@ -205,7 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         user.email || '',
         validatedData.email,
         inviteUrl,
-        validatedData.message
+        validatedData.message || undefined
       );
 
       if (!emailSent) {
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           acc.push({
             name: session.subject.name,
             hours: Number(session.duration),
-            color: session.subject.color,
+            color: session.subject.color || '#3B82F6',
           });
         }
         return acc;
@@ -314,8 +314,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         sessionsCount: todaySessions.length,
         subjects: todaySubjects,
         streak: user.currentStreak,
-        weeklyGoal: user.dailyGoal * 7,
-        weeklyProgress: Math.round((user.weeklyHours / (user.dailyGoal * 7)) * 100),
+        weeklyGoal: (user.dailyGoal || 5) * 7,
+        weeklyProgress: Math.round((user.weeklyHours / ((user.dailyGoal || 5) * 7)) * 100),
       };
 
       const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Study Tracker User';

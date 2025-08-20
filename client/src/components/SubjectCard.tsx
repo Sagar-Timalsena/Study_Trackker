@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
+import StudyTimer from "./StudyTimer";
 import type { SubjectWithStats } from "@shared/schema";
 
 interface SubjectCardProps {
@@ -10,6 +12,8 @@ interface SubjectCardProps {
 }
 
 export default function SubjectCard({ subject, onEdit, onDelete }: SubjectCardProps) {
+  const [isSessionActive, setIsSessionActive] = useState(false);
+
   const formatLastStudyDate = (date: Date | null) => {
     if (!date) return "Never";
     
@@ -34,6 +38,19 @@ export default function SubjectCard({ subject, onEdit, onDelete }: SubjectCardPr
     if (subject.weeklyProgress >= 50) return "bg-yellow-500";
     return "bg-red-500";
   };
+
+  const handleStartSession = () => {
+    setIsSessionActive(true);
+  };
+
+  const handleStopSession = () => {
+    setIsSessionActive(false);
+  };
+
+  // Show timer when session is active
+  if (isSessionActive) {
+    return <StudyTimer subject={subject} onStop={handleStopSession} />;
+  }
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -109,10 +126,7 @@ export default function SubjectCard({ subject, onEdit, onDelete }: SubjectCardPr
         <Button 
           variant="secondary" 
           className="w-full mt-4"
-          onClick={() => {
-            // TODO: Implement study session start functionality
-            console.log("Start study session for:", subject.name);
-          }}
+          onClick={handleStartSession}
         >
           <i className="fas fa-play mr-2"></i>
           Start Session
