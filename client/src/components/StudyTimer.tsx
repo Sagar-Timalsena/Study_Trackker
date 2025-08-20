@@ -67,8 +67,22 @@ export default function StudyTimer({ subject, onStop }: StudyTimerProps) {
       setElapsedSeconds(elapsed);
     }, 1000);
 
-    return () => clearInterval(timer);
-  }, [startTime]);
+    // Auto-stop when navigating away
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (elapsedSeconds > 60) { // Only prompt if more than 1 minute has passed
+        e.preventDefault();
+        e.returnValue = '';
+        return '';
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+  }, [startTime, elapsedSeconds]);
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
@@ -118,9 +132,17 @@ export default function StudyTimer({ subject, onStop }: StudyTimerProps) {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleDiscardSession}
+              className="mr-3 p-2 hover:bg-gray-100"
+            >
+              <i className="fas fa-arrow-left"></i>
+            </Button>
             <div 
               className="w-12 h-12 rounded-lg flex items-center justify-center mr-4"
-              style={{ backgroundColor: subject.color }}
+              style={{ backgroundColor: subject.color || '#3B82F6' }}
             >
               <i 
                 className={`${subject.icon} text-xl text-white`}

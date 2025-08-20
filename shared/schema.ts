@@ -153,7 +153,9 @@ export const insertSubjectSchema = createInsertSchema(subjects).omit({
 export type InsertSubject = z.infer<typeof insertSubjectSchema>;
 export type Subject = typeof subjects.$inferSelect;
 
-export const insertStudySessionSchema = createInsertSchema(studySessions).omit({
+export const insertStudySessionSchema = createInsertSchema(studySessions, {
+  sessionDate: z.string().transform((str) => new Date(str)),
+}).omit({
   id: true,
   userId: true,
   createdAt: true,

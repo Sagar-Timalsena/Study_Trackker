@@ -7,6 +7,8 @@ import { apiRequest } from "@/lib/queryClient";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import { useEffect } from "react";
 import ProgressChart from "@/components/ProgressChart";
+import { exportToCSV, exportDetailedSessionsToCSV, type SessionWithSubject } from "@/utils/csvExport";
+import type { Subject } from "@shared/schema";
 
 interface DashboardStats {
   totalStudyHours: number;
@@ -22,6 +24,14 @@ export default function Dashboard() {
 
   const { data: stats, isLoading, error } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
+  });
+
+  const { data: subjects = [] } = useQuery<Subject[]>({
+    queryKey: ["/api/subjects"],
+  });
+
+  const { data: sessions = [] } = useQuery<SessionWithSubject[]>({
+    queryKey: ["/api/study-sessions"],
   });
 
   useEffect(() => {
@@ -52,6 +62,40 @@ export default function Dashboard() {
         variant: "destructive",
       });
     }
+  };
+
+  const handleExportSubjectSummary = () => {
+    if (subjects.length === 0 || sessions.length === 0) {
+      toast({
+        title: "No Data",
+        description: "No study data available for export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    exportToCSV({ subjects, sessions }, "subject-wise-study-summary");
+    toast({
+      title: "Success",
+      description: "Subject-wise study data exported successfully!",
+    });
+  };
+
+  const handleExportDetailedSessions = () => {
+    if (sessions.length === 0) {
+      toast({
+        title: "No Data", 
+        description: "No study sessions available for export.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    exportDetailedSessionsToCSV(sessions, "detailed-study-sessions");
+    toast({
+      title: "Success",
+      description: "Detailed study sessions exported successfully!",
+    });
   };
 
   if (isLoading) {
@@ -88,9 +132,38 @@ export default function Dashboard() {
   return (
     <div className="p-6">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
-        <p className="text-gray-600">Welcome back! Here's your study progress overview.</p>
+      <div className="mb-8 flex justify-between items-start">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+          <p className="text-gray-600">Welcome back! Here's your study progress overview.</p>
+        </div>
+        <div className="flex space-x-3">
+          <Button
+            variant="outline"
+            onClick={handleExportSubjectSummary}
+            className="flex items-center space-x-2"
+            disabled={subjects.length === 0 || sessions.length === 0}
+          >
+            <i className="fas fa-download text-sm"></i>
+            <span>Export Summary CSV</span>
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportDetailedSessions}
+            className="flex items-center space-x-2"
+            disabled={sessions.length === 0}
+          >
+            <i className="fas fa-file-csv text-sm"></i>
+            <span>Export Sessions CSV</span>
+          </Button>
+          <Button
+            onClick={handleShareProgress}
+            className="flex items-center space-x-2"
+          >
+            <i className="fas fa-share text-sm"></i>
+            <span>Share Progress</span>
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -198,13 +271,6 @@ export default function Dashboard() {
                   <span className="text-sm text-gray-500">{subject.percentage}%</span>
                 </div>
               ))}
-            </div>
-            
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <Button onClick={handleShareProgress} className="w-full">
-                <i className="fas fa-share mr-2"></i>
-                Share Daily Progress
-              </Button>
             </div>
           </CardContent>
         </Card>
